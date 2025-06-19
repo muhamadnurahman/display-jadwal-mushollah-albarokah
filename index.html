@@ -1,0 +1,196 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>To-Do List Lengkap</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      padding: 30px;
+      max-width: 500px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    #todo-form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    #todo-input {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #007bff;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #todo-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    #todo-list li {
+      background: white;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-left: 5px solid #007bff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .done {
+      text-decoration: line-through;
+      color: gray;
+    }
+  </style>
+</head>
+<body>
+  <h1>To-Do List Lengkap</h1>
+
+  <form id="todo-form">
+    <input type="text" id="todo-input" placeholder="Tambahkan tugas..." required>
+    <button type="submit">Tambah</button>
+  </form>
+
+  <button id="mark-all-done">Tandai Semua Selesai</button>
+  <div>
+    <button id="filter-all">Semua</button>
+    <button id="filter-done">Selesai</button>
+    <button id="filter-pending">Belum Selesai</button>
+  </div>
+
+  <ul id="todo-list">
+    <!-- Tugas-tugas akan muncul di sini -->
+  </ul>
+
+  <script>
+    const form = document.getElementById("todo-form");
+    const input = document.getElementById("todo-input");
+    const list = document.getElementById("todo-list");
+
+    let todos = JSON.parse(localStorage.getItem("todos")) || [];
+
+    // Fungsi untuk render semua tugas
+    function renderTodos(filter = 'all') {
+      list.innerHTML = "";
+      let filteredTodos = todos;
+
+      if (filter === 'done') {
+        filteredTodos = todos.filter(todo => todo.done);
+      } else if (filter === 'pending') {
+        filteredTodos = todos.filter(todo => !todo.done);
+      }
+
+      filteredTodos.forEach((todo, index) => {
+        const li = document.createElement("li");
+
+        const span = document.createElement("span");
+        span.textContent = todo.text;
+        span.style.flex = "1";
+        if (todo.done) span.classList.add("done");
+
+        span.addEventListener("click", function () {
+          todos[index].done = !todos[index].done;
+          saveTodos();
+          renderTodos();
+        });
+
+        // Tombol hapus
+        const delButton = document.createElement("button");
+        delButton.textContent = "❌";
+        delButton.style.marginLeft = "10px";
+        delButton.style.background = "transparent";
+        delButton.style.border = "none";
+        delButton.style.cursor = "pointer";
+        delButton.addEventListener("click", function () {
+          todos.splice(index, 1);
+          saveTodos();
+          renderTodos();
+        });
+
+        // Tombol edit
+        const editButton = document.createElement("button");
+        editButton.textContent = "✏️";
+        editButton.style.marginLeft = "10px";
+        editButton.style.background = "transparent";
+        editButton.style.border = "none";
+        editButton.style.cursor = "pointer";
+        editButton.addEventListener("click", function () {
+          const newText = prompt("Edit tugas:", todo.text);
+          if (newText) {
+            todos[index].text = newText;
+            saveTodos();
+            renderTodos();
+          }
+        });
+
+        li.appendChild(span);
+        li.appendChild(editButton);
+        li.appendChild(delButton);
+        list.appendChild(li);
+      });
+    }
+
+    // Fungsi untuk simpan ke localStorage
+    function saveTodos() {
+      localStorage.setItem("todos", JSON.stringify(todos));
+    }
+
+    // Menandai semua tugas selesai
+    document.getElementById("mark-all-done").addEventListener("click", function () {
+      todos.forEach(todo => todo.done = true);
+      saveTodos();
+      renderTodos();
+    });
+
+    // Filter tugas
+    document.getElementById("filter-all").addEventListener("click", function () {
+      renderTodos('all');
+    });
+
+    document.getElementById("filter-done").addEventListener("click", function () {
+      renderTodos('done');
+    });
+
+    document.getElementById("filter-pending").addEventListener("click", function () {
+      renderTodos('pending');
+    });
+
+    // Tambah tugas baru
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      const taskText = input.value.trim();
+      if (taskText === "") return;
+
+      todos.push({ text: taskText, done: false });
+      saveTodos();
+      renderTodos();
+      input.value = "";
+    });
+
+    // Saat pertama kali halaman dibuka
+    renderTodos();
+  </script>
+</body>
+</html>
