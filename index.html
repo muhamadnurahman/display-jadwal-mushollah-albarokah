@@ -1,88 +1,168 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>To-Do List Lengkap</title>
+  <title>Catatan Harian</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      background: #f0f0f0;
-      padding: 30px;
-      max-width: 500px;
+      font-family: 'Poppins', sans-serif;
+      background: #fdfcfb;
+      padding: 20px;
+      margin: 0;
+      color: #333;
+    }
+
+    .container {
+      max-width: 600px;
       margin: auto;
     }
 
     h1 {
       text-align: center;
-      color: #333;
+      margin-bottom: 20px;
+      font-weight: 600;
+      color: #444;
     }
 
-    #todo-form {
+    form {
       display: flex;
       gap: 10px;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
 
-    #todo-input {
+    input[type="text"] {
       flex: 1;
-      padding: 10px;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
       font-size: 16px;
     }
 
     button {
-      padding: 10px 20px;
-      font-size: 16px;
-      background-color: #007bff;
+      padding: 12px 16px;
       border: none;
-      color: white;
+      border-radius: 8px;
+      font-size: 16px;
       cursor: pointer;
+      transition: all 0.3s ease;
     }
 
-    button:hover {
-      background-color: #0056b3;
+    button.primary {
+      background-color: #4caf50;
+      color: white;
     }
 
-    #todo-list {
+    button.primary:hover {
+      background-color: #45a049;
+    }
+
+    .filters, .mark-all {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+
+    .filters button, .mark-all button {
+      flex: 1;
+      margin: 0 5px;
+      background-color: #ddd;
+      color: #333;
+    }
+
+    .filters button:hover, .mark-all button:hover {
+      background-color: #ccc;
+    }
+
+    ul {
       list-style: none;
       padding: 0;
     }
 
-    #todo-list li {
+    li {
       background: white;
       margin-bottom: 10px;
-      padding: 10px;
-      border-left: 5px solid #007bff;
+      padding: 12px 16px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
+      transition: background 0.3s;
+    }
+
+    li:hover {
+      background: #f9f9f9;
+    }
+
+    .task-text {
+      flex: 1;
+      margin-right: 10px;
+      word-break: break-word;
+      cursor: pointer;
     }
 
     .done {
       text-decoration: line-through;
-      color: gray;
+      color: #aaa;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      margin-left: 8px;
+      color: #666;
+      transition: color 0.2s;
+    }
+
+    .icon-btn:hover {
+      color: #000;
+    }
+
+    @media (max-width: 500px) {
+      form, .filters, .mark-all {
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+        margin: 5px 0;
+      }
+
+      .filters button, .mark-all button {
+        margin: 5px 0;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>To-Do List Lengkap</h1>
+  <div class="container">
+    <h1>Catatan Harian</h1>
 
-  <form id="todo-form">
-    <input type="text" id="todo-input" placeholder="Tambahkan tugas..." required>
-    <button type="submit">Tambah</button>
-  </form>
+    <form id="todo-form">
+      <input type="text" id="todo-input" placeholder="Tulis catatan baru..." required>
+      <button class="primary" type="submit">Tambah</button>
+    </form>
 
-  <button id="mark-all-done">Tandai Semua Selesai</button>
-  <div>
-    <button id="filter-all">Semua</button>
-    <button id="filter-done">Selesai</button>
-    <button id="filter-pending">Belum Selesai</button>
+    <div class="mark-all">
+      <button id="mark-all-done">✅ Tandai Semua</button>
+    </div>
+
+    <div class="filters">
+      <button id="filter-all">📋 Semua</button>
+      <button id="filter-done">✔️ Selesai</button>
+      <button id="filter-pending">🕒 Belum</button>
+    </div>
+
+    <ul id="todo-list"></ul>
   </div>
-
-  <ul id="todo-list">
-    <!-- Tugas-tugas akan muncul di sini -->
-  </ul>
 
   <script>
     const form = document.getElementById("todo-form");
@@ -91,105 +171,80 @@
 
     let todos = JSON.parse(localStorage.getItem("todos")) || [];
 
-    // Fungsi untuk render semua tugas
     function renderTodos(filter = 'all') {
       list.innerHTML = "";
-      let filteredTodos = todos;
+      let filtered = todos;
 
       if (filter === 'done') {
-        filteredTodos = todos.filter(todo => todo.done);
+        filtered = todos.filter(t => t.done);
       } else if (filter === 'pending') {
-        filteredTodos = todos.filter(todo => !todo.done);
+        filtered = todos.filter(t => !t.done);
       }
 
-      filteredTodos.forEach((todo, index) => {
+      filtered.forEach((todo, index) => {
         const li = document.createElement("li");
 
         const span = document.createElement("span");
         span.textContent = todo.text;
-        span.style.flex = "1";
-        if (todo.done) span.classList.add("done");
-
-        span.addEventListener("click", function () {
+        span.className = "task-text" + (todo.done ? " done" : "");
+        span.addEventListener("click", () => {
           todos[index].done = !todos[index].done;
           saveTodos();
-          renderTodos();
+          renderTodos(filter);
         });
 
-        // Tombol hapus
-        const delButton = document.createElement("button");
-        delButton.textContent = "❌";
-        delButton.style.marginLeft = "10px";
-        delButton.style.background = "transparent";
-        delButton.style.border = "none";
-        delButton.style.cursor = "pointer";
-        delButton.addEventListener("click", function () {
-          todos.splice(index, 1);
-          saveTodos();
-          renderTodos();
-        });
-
-        // Tombol edit
-        const editButton = document.createElement("button");
-        editButton.textContent = "✏️";
-        editButton.style.marginLeft = "10px";
-        editButton.style.background = "transparent";
-        editButton.style.border = "none";
-        editButton.style.cursor = "pointer";
-        editButton.addEventListener("click", function () {
-          const newText = prompt("Edit tugas:", todo.text);
+        const editBtn = document.createElement("button");
+        editBtn.className = "icon-btn";
+        editBtn.innerHTML = "✏️";
+        editBtn.addEventListener("click", () => {
+          const newText = prompt("Edit catatan:", todo.text);
           if (newText) {
             todos[index].text = newText;
             saveTodos();
-            renderTodos();
+            renderTodos(filter);
           }
         });
 
+        const delBtn = document.createElement("button");
+        delBtn.className = "icon-btn";
+        delBtn.innerHTML = "❌";
+        delBtn.addEventListener("click", () => {
+          todos.splice(index, 1);
+          saveTodos();
+          renderTodos(filter);
+        });
+
         li.appendChild(span);
-        li.appendChild(editButton);
-        li.appendChild(delButton);
+        li.appendChild(editBtn);
+        li.appendChild(delBtn);
         list.appendChild(li);
       });
     }
 
-    // Fungsi untuk simpan ke localStorage
     function saveTodos() {
       localStorage.setItem("todos", JSON.stringify(todos));
     }
 
-    // Menandai semua tugas selesai
-    document.getElementById("mark-all-done").addEventListener("click", function () {
-      todos.forEach(todo => todo.done = true);
-      saveTodos();
-      renderTodos();
-    });
-
-    // Filter tugas
-    document.getElementById("filter-all").addEventListener("click", function () {
-      renderTodos('all');
-    });
-
-    document.getElementById("filter-done").addEventListener("click", function () {
-      renderTodos('done');
-    });
-
-    document.getElementById("filter-pending").addEventListener("click", function () {
-      renderTodos('pending');
-    });
-
-    // Tambah tugas baru
-    form.addEventListener("submit", function (event) {
-      event.preventDefault();
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
       const taskText = input.value.trim();
-      if (taskText === "") return;
-
+      if (!taskText) return;
       todos.push({ text: taskText, done: false });
       saveTodos();
       renderTodos();
       input.value = "";
     });
 
-    // Saat pertama kali halaman dibuka
+    document.getElementById("mark-all-done").addEventListener("click", () => {
+      todos.forEach(todo => todo.done = true);
+      saveTodos();
+      renderTodos();
+    });
+
+    document.getElementById("filter-all").addEventListener("click", () => renderTodos('all'));
+    document.getElementById("filter-done").addEventListener("click", () => renderTodos('done'));
+    document.getElementById("filter-pending").addEventListener("click", () => renderTodos('pending'));
+
     renderTodos();
   </script>
 </body>
