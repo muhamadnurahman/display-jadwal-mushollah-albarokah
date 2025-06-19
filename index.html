@@ -3,253 +3,164 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Catatan Harian</title>
+  <title>Display Mushollah Al-Barokah</title>
   <style>
     body {
-      font-family: "Segoe UI", sans-serif;
-      background: #fafafa;
-      padding: 30px;
-      max-width: 600px;
-      margin: auto;
-      color: #333;
-    }
-
-    h1 {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #000; /* latar belakang hitam */
+      margin: 0;
+      padding: 20px;
+      color: #fff; /* teks default putih */
       text-align: center;
-      color: #333;
-      margin-bottom: 20px;
     }
 
-    #todo-form {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
-
-    #todo-input {
-      flex: 1;
-      padding: 10px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-    }
-
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      background-color: #4caf50;
-      border: none;
-      color: white;
-      border-radius: 10px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #388e3c;
-    }
-
-    #filter-buttons, #tools {
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin: 10px 0;
-    }
-
-    .filter-btn {
-      flex: 1;
-      background-color: #2196f3;
-    }
-
-    .filter-btn:hover {
-      background-color: #1976d2;
-    }
-
-    #search {
-      width: 100%;
-      padding: 10px;
-      font-size: 16px;
+    h2 {
+      color: lightseagreen; /* hijau lembut */
+      font-size: 2rem;
       margin-bottom: 10px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
     }
 
-    ul {
-      list-style: none;
-      padding: 0;
+    h4 {
+      color: white; /* abu-abu terang */
+      margin-top: 0;
     }
 
-    li {
-      background: #fff;
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 12px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: 0.3s ease;
+    #tanggal {
+      font-size: 1.4rem;
+      margin-bottom: 20px;
+      color: #fbc02d; /* kuning terang */
     }
 
-    li.done {
-      background: #e0f7fa;
-      text-decoration: line-through;
-      color: #888;
+    #jadwal-sholat {
+      margin-top: 20px;
+      background-color: #1c1c1c; /* abu gelap */
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(255, 255, 255, 0.1);
+      padding: 10px;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
-    .actions button {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 18px;
-      margin-left: 10px;
+    .sholat {
+      padding: 10px;
+      border-bottom: 1px solid #333;
+      font-size: 1.2rem;
+      color: lightseagreen; /* biru muda */
     }
 
-    .important {
-      color: #e91e63;
+    .sholat:last-child {
+      border-bottom: none;
+    }
+
+    #next-prayer {
       font-weight: bold;
-    }
-
-    span[contenteditable="true"]:focus {
-      outline: 2px solid #4caf50;
-      background-color: #f1f8e9;
+      margin-top: 25px;
+      font-size: 1.3rem;
+      color: white; /* merah terang */
+      background-color: #212121; /* latar abu-abu gelap */
+      display: inline-block;
+      padding: 10px 15px;
+      border-radius: 6px;
+      box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1);
     }
   </style>
 </head>
 <body>
-  <h1>Catatan Harian</h1>
-
-  <form id="todo-form">
-    <input type="text" id="todo-input" placeholder="Tulis catatan baru..." required />
-    <button type="submit">Tambah</button>
-  </form>
-
-  <input type="text" id="search" placeholder="Cari catatan...">
-
-  <div id="tools">
-    <button id="mark-all-done">Selesai Semua</button>
-    <button id="clear-all">Hapus Semua</button>
-  </div>
-
-  <div id="filter-buttons">
-    <button class="filter-btn" id="filter-all">Semua</button>
-    <button class="filter-btn" id="filter-done">Selesai</button>
-    <button class="filter-btn" id="filter-pending">Belum</button>
-    <button class="filter-btn" id="filter-important">Penting</button>
-  </div>
-
-  <ul id="todo-list"></ul>
+  <h2>Mushollah Al-Barokah</h2>
+  <h4>Klayan, Kec. Gunungjati, Kabupaten Cirebon, Jawa Barat</h4>
+  <div id="tanggal"></div>
+  <div id="jadwal-sholat"></div>
+  <div id="next-prayer"></div>
 
   <script>
-    const form = document.getElementById("todo-form");
-    const input = document.getElementById("todo-input");
-    const list = document.getElementById("todo-list");
-    const search = document.getElementById("search");
+    const hijriMonths = [
+      "Muharram", "Safar", "Rabiul Awal", "Rabiul Akhir", "Jumadil Awal", "Jumadil Akhir",
+      "Rajab", "Sya'ban", "Ramadhan", "Syawal", "Zulkaidah", "Zulhijah"
+    ];
 
-    let todos = JSON.parse(localStorage.getItem("todos")) || [];
+    const prayerTimes = {
+      Subuh: "04:35",
+      Dzuhur: "11:58",
+      Ashar: "15:15",
+      Maghrib: "17:49",
+      Isya: "19:00"
+    };
 
-    function renderTodos(filter = 'all', keyword = '') {
-      list.innerHTML = "";
+    function getHijriDate() {
+      const today = new Date();
+      const hijri = new Intl.DateTimeFormat('en-TN-u-ca-islamic', {
+        day: 'numeric', month: 'numeric', year: 'numeric'
+      }).formatToParts(today);
 
-      let filtered = todos.filter(todo => {
-        if (keyword && !todo.text.toLowerCase().includes(keyword.toLowerCase())) return false;
-        if (filter === 'done') return todo.done;
-        if (filter === 'pending') return !todo.done;
-        if (filter === 'important') return todo.important;
-        return true;
-      });
+      const hDay = hijri.find(part => part.type === 'day').value;
+      const hMonth = hijri.find(part => part.type === 'month').value;
+      const hYear = hijri.find(part => part.type === 'year').value;
 
-      // Urutkan penting ke atas
-      filtered.sort((a, b) => b.important - a.important);
-
-      filtered.forEach((todo, index) => {
-        const li = document.createElement("li");
-        if (todo.done) li.classList.add("done");
-
-        const span = document.createElement("span");
-        span.textContent = todo.text;
-        span.contentEditable = true;
-        span.style.flex = "1";
-        if (todo.important) span.classList.add("important");
-
-        span.addEventListener("input", () => {
-          todos[index].text = span.textContent;
-          saveTodos();
-        });
-
-        span.addEventListener("click", () => {
-          todos[index].done = !todos[index].done;
-          saveTodos();
-          renderTodos(filter, search.value);
-        });
-
-        const actions = document.createElement("div");
-        actions.className = "actions";
-
-        const pinBtn = document.createElement("button");
-        pinBtn.innerHTML = todo.important ? "📌" : "📍";
-        pinBtn.title = "Tandai penting";
-        pinBtn.addEventListener("click", () => {
-          todos[index].important = !todos[index].important;
-          saveTodos();
-          renderTodos(filter, search.value);
-        });
-
-        const delBtn = document.createElement("button");
-        delBtn.innerHTML = "🗑️";
-        delBtn.title = "Hapus";
-        delBtn.addEventListener("click", () => {
-          todos.splice(index, 1);
-          saveTodos();
-          renderTodos(filter, search.value);
-        });
-
-        actions.appendChild(pinBtn);
-        actions.appendChild(delBtn);
-
-        li.appendChild(span);
-        li.appendChild(actions);
-        list.appendChild(li);
-      });
+      return `${hDay} ${hijriMonths[parseInt(hMonth) - 1]} ${hYear} H`;
     }
 
-    function saveTodos() {
-      localStorage.setItem("todos", JSON.stringify(todos));
+    function getMasehiDate() {
+      const now = new Date();
+      const options = { day: 'numeric', month: 'long', year: 'numeric' };
+      return now.toLocaleDateString('id-ID', options);
     }
 
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const text = input.value.trim();
-      if (text) {
-        todos.push({ text, done: false, important: false });
-        input.value = "";
-        saveTodos();
-        renderTodos();
+    function tampilkanTanggal() {
+      const masehi = getMasehiDate();
+      const hijri = getHijriDate();
+      document.getElementById("tanggal").textContent = `${masehi} M / ${hijri}`;
+    }
+
+    function tampilkanJadwalSholat() {
+      const jadwal = document.getElementById("jadwal-sholat");
+      jadwal.innerHTML = "";
+      for (const [sholat, waktu] of Object.entries(prayerTimes)) {
+        const div = document.createElement("div");
+        div.className = "sholat";
+        div.textContent = `${sholat}: ${waktu}`;
+        jadwal.appendChild(div);
       }
-    });
+    }
 
-    document.getElementById("mark-all-done").addEventListener("click", () => {
-      todos.forEach(t => t.done = true);
-      saveTodos();
-      renderTodos();
-    });
+    function getNextPrayerTime() {
+      const now = new Date();
+      const times = Object.entries(prayerTimes).map(([name, time]) => {
+        const [hours, minutes] = time.split(":").map(Number);
+        const prayerDate = new Date(now);
+        prayerDate.setHours(hours, minutes, 0, 0);
+        return { name, date: prayerDate };
+      });
 
-    document.getElementById("clear-all").addEventListener("click", () => {
-      if (confirm("Hapus semua catatan?")) {
-        todos = [];
-        saveTodos();
-        renderTodos();
+      for (const { name, date } of times) {
+        if (date > now) {
+          return { name, date };
+        }
       }
-    });
 
-    document.getElementById("filter-all").onclick = () => renderTodos("all", search.value);
-    document.getElementById("filter-done").onclick = () => renderTodos("done", search.value);
-    document.getElementById("filter-pending").onclick = () => renderTodos("pending", search.value);
-    document.getElementById("filter-important").onclick = () => renderTodos("important", search.value);
+      const nextDay = new Date(now);
+      nextDay.setDate(now.getDate() + 1);
+      nextDay.setHours(4, 35, 0, 0);
+      return { name: "Subuh", date: nextDay };
+    }
 
-    search.addEventListener("input", () => renderTodos("all", search.value));
+    function updateCountdown() {
+      const { name, date } = getNextPrayerTime();
+      const now = new Date();
+      const diff = Math.max(0, date - now);
 
-    renderTodos();
+      const hours = Math.floor(diff / 1000 / 60 / 60);
+      const minutes = Math.floor((diff / 1000 / 60) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+
+      document.getElementById("next-prayer").textContent =
+        `Menuju ${name} berikutnya: ${hours}j ${minutes}m ${seconds}d`;
+    }
+
+    tampilkanTanggal();
+    tampilkanJadwalSholat();
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
   </script>
 </body>
 </html>
