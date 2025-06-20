@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Display Mushollah Al-Barokah</title>
+  <title>Jadwal Sholat</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -18,12 +18,6 @@
       color: #81c784;
       font-size: 2rem;
       margin-bottom: 5px;
-    }
-
-    h4 {
-      color: #ccc;
-      margin-top: 0;
-      font-weight: normal;
     }
 
     #tanggal {
@@ -74,12 +68,11 @@
   </style>
 </head>
 <body>
-  <h2>Mushollah Al-Barokah</h2>
-  <h4>Klayan, Kec. Gunungjati, Kabupaten Cirebon, Jawa Barat</h4>
+  <h2>Jadwal Sholat</h2>
+  <div id="lokasi-info">Menentukan lokasi...</div>
   <div id="tanggal">Memuat tanggal...</div>
   <div id="jadwal-sholat">Memuat jadwal sholat...</div>
   <div id="next-prayer"></div>
-  <div id="lokasi-info"></div>
 
   <script>
     const hijriMonths = [
@@ -123,7 +116,7 @@
       const timings = result.timings;
       const lokasi = result.location;
 
-      document.getElementById("lokasi-info").textContent = `Lokasi: ${lokasi.timezone}`;
+      document.getElementById("lokasi-info").textContent = `Lokasi saat ini: ${lokasi.timezone}`;
 
       const prayerMap = {
         Fajr: "Subuh",
