@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Display Mushollah Al-Barokah</title>
   <style>
     body {
@@ -65,6 +65,12 @@
       border-radius: 6px;
       box-shadow: 0 2px 4px rgba(255, 255, 255, 0.15);
     }
+
+    #lokasi-info {
+      font-size: 0.9rem;
+      color: #ccc;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -73,6 +79,7 @@
   <div id="tanggal">Memuat tanggal...</div>
   <div id="jadwal-sholat">Memuat jadwal sholat...</div>
   <div id="next-prayer"></div>
+  <div id="lokasi-info"></div>
 
   <script>
     const hijriMonths = [
@@ -105,14 +112,19 @@
       document.getElementById("tanggal").textContent = `${masehi} M / ${hijri}`;
     }
 
-    async function getPrayerTimes() {
-      const response = await fetch("https://api.aladhan.com/v1/timingsByCity?city=Cirebon&country=Indonesia&method=20");
+    async function getPrayerTimes(lat, lon) {
+      const response = await fetch(`https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=20`);
       const data = await response.json();
-      return data.data.timings;
+      return { timings: data.data.timings, location: data.data.meta };
     }
 
-    async function tampilkanJadwalSholat() {
-      const timings = await getPrayerTimes();
+    async function tampilkanJadwalSholat(lat = -6.7325, lon = 108.5523) {
+      const result = await getPrayerTimes(lat, lon);
+      const timings = result.timings;
+      const lokasi = result.location;
+
+      document.getElementById("lokasi-info").textContent = `Lokasi: ${lokasi.timezone}`;
+
       const prayerMap = {
         Fajr: "Subuh",
         Dhuhr: "Dzuhur",
@@ -132,7 +144,6 @@
         jadwal.appendChild(div);
       }
 
-      // Simpan untuk countdown
       window.waktuSholat = {
         Subuh: timings.Fajr,
         Dzuhur: timings.Dhuhr,
@@ -177,11 +188,36 @@
         `Menuju ${name} berikutnya: ${hours}j ${minutes}m ${seconds}d`;
     }
 
-    tampilkanTanggal();
-    tampilkanJadwalSholat().then(() => {
-      updateCountdown();
-      setInterval(updateCountdown, 1000);
-    });
+    function initApp() {
+      tampilkanTanggal();
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            tampilkanJadwalSholat(lat, lon).then(() => {
+              updateCountdown();
+              setInterval(updateCountdown, 1000);
+            });
+          },
+          (err) => {
+            console.warn("Gagal ambil lokasi, pakai default (Cirebon)");
+            tampilkanJadwalSholat().then(() => {
+              updateCountdown();
+              setInterval(updateCountdown, 1000);
+            });
+          }
+        );
+      } else {
+        tampilkanJadwalSholat().then(() => {
+          updateCountdown();
+          setInterval(updateCountdown, 1000);
+        });
+      }
+    }
+
+    initApp();
   </script>
 </body>
 </html>
