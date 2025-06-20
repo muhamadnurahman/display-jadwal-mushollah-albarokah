@@ -7,33 +7,34 @@
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #000; /* latar belakang hitam */
+      background-color: #000;
       margin: 0;
       padding: 20px;
-      color: #fff; /* teks default putih */
+      color: #fff;
       text-align: center;
     }
 
     h2 {
-      color: lightseagreen; /* hijau lembut */
+      color: #81c784;
       font-size: 2rem;
-      margin-bottom: 10px;
+      margin-bottom: 5px;
     }
 
     h4 {
-      color: white; /* abu-abu terang */
+      color: #ccc;
       margin-top: 0;
+      font-weight: normal;
     }
 
     #tanggal {
       font-size: 1.4rem;
       margin-bottom: 20px;
-      color: #fbc02d; /* kuning terang */
+      color: #ffeb3b;
     }
 
     #jadwal-sholat {
       margin-top: 20px;
-      background-color: #1c1c1c; /* abu gelap */
+      background-color: #1c1c1c;
       border-radius: 8px;
       box-shadow: 0 2px 6px rgba(255, 255, 255, 0.1);
       padding: 10px;
@@ -44,9 +45,9 @@
 
     .sholat {
       padding: 10px;
-      border-bottom: 1px solid #333;
+      border-bottom: 1px solid #444;
       font-size: 1.2rem;
-      color: lightseagreen; /* biru muda */
+      color: #90caf9;
     }
 
     .sholat:last-child {
@@ -57,20 +58,20 @@
       font-weight: bold;
       margin-top: 25px;
       font-size: 1.3rem;
-      color: white; /* merah terang */
-      background-color: #212121; /* latar abu-abu gelap */
+      color: #ffc107;
+      background-color: #333;
       display: inline-block;
       padding: 10px 15px;
       border-radius: 6px;
-      box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1);
+      box-shadow: 0 2px 4px rgba(255, 255, 255, 0.15);
     }
   </style>
 </head>
 <body>
   <h2>Mushollah Al-Barokah</h2>
   <h4>Klayan, Kec. Gunungjati, Kabupaten Cirebon, Jawa Barat</h4>
-  <div id="tanggal"></div>
-  <div id="jadwal-sholat"></div>
+  <div id="tanggal">Memuat tanggal...</div>
+  <div id="jadwal-sholat">Memuat jadwal sholat...</div>
   <div id="next-prayer"></div>
 
   <script>
@@ -78,14 +79,6 @@
       "Muharram", "Safar", "Rabiul Awal", "Rabiul Akhir", "Jumadil Awal", "Jumadil Akhir",
       "Rajab", "Sya'ban", "Ramadhan", "Syawal", "Zulkaidah", "Zulhijah"
     ];
-
-    const prayerTimes = {
-      Subuh: "04:35",
-      Dzuhur: "11:58",
-      Ashar: "15:15",
-      Maghrib: "17:49",
-      Isya: "19:00"
-    };
 
     function getHijriDate() {
       const today = new Date();
@@ -112,18 +105,47 @@
       document.getElementById("tanggal").textContent = `${masehi} M / ${hijri}`;
     }
 
-    function tampilkanJadwalSholat() {
+    async function getPrayerTimes() {
+      const response = await fetch("https://api.aladhan.com/v1/timingsByCity?city=Cirebon&country=Indonesia&method=20");
+      const data = await response.json();
+      return data.data.timings;
+    }
+
+    async function tampilkanJadwalSholat() {
+      const timings = await getPrayerTimes();
+      const prayerMap = {
+        Fajr: "Subuh",
+        Dhuhr: "Dzuhur",
+        Asr: "Ashar",
+        Maghrib: "Maghrib",
+        Isha: "Isya"
+      };
+
       const jadwal = document.getElementById("jadwal-sholat");
       jadwal.innerHTML = "";
-      for (const [sholat, waktu] of Object.entries(prayerTimes)) {
+
+      for (const [key, label] of Object.entries(prayerMap)) {
+        const waktu = timings[key];
         const div = document.createElement("div");
         div.className = "sholat";
-        div.textContent = `${sholat}: ${waktu}`;
+        div.textContent = `${label}: ${waktu}`;
         jadwal.appendChild(div);
       }
+
+      // Simpan untuk countdown
+      window.waktuSholat = {
+        Subuh: timings.Fajr,
+        Dzuhur: timings.Dhuhr,
+        Ashar: timings.Asr,
+        Maghrib: timings.Maghrib,
+        Isya: timings.Isha
+      };
     }
 
     function getNextPrayerTime() {
+      const prayerTimes = window.waktuSholat;
+      if (!prayerTimes) return { name: "-", date: new Date() };
+
       const now = new Date();
       const times = Object.entries(prayerTimes).map(([name, time]) => {
         const [hours, minutes] = time.split(":").map(Number);
@@ -133,14 +155,13 @@
       });
 
       for (const { name, date } of times) {
-        if (date > now) {
-          return { name, date };
-        }
+        if (date > now) return { name, date };
       }
 
       const nextDay = new Date(now);
       nextDay.setDate(now.getDate() + 1);
-      nextDay.setHours(4, 35, 0, 0);
+      const [h, m] = prayerTimes["Subuh"].split(":").map(Number);
+      nextDay.setHours(h, m, 0, 0);
       return { name: "Subuh", date: nextDay };
     }
 
@@ -148,7 +169,6 @@
       const { name, date } = getNextPrayerTime();
       const now = new Date();
       const diff = Math.max(0, date - now);
-
       const hours = Math.floor(diff / 1000 / 60 / 60);
       const minutes = Math.floor((diff / 1000 / 60) % 60);
       const seconds = Math.floor((diff / 1000) % 60);
@@ -158,9 +178,10 @@
     }
 
     tampilkanTanggal();
-    tampilkanJadwalSholat();
-    updateCountdown();
-    setInterval(updateCountdown, 1000);
+    tampilkanJadwalSholat().then(() => {
+      updateCountdown();
+      setInterval(updateCountdown, 1000);
+    });
   </script>
 </body>
 </html>
