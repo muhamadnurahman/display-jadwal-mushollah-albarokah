@@ -8,29 +8,35 @@
     body {
       font-family: 'Segoe UI', sans-serif;
       background-color: #000;
+      color: #f1f1f1;
       margin: 0;
       padding: 20px;
-      color: #fff;
       text-align: center;
     }
 
     h2 {
-      color: #81c784;
+      color: #4caf50;
       font-size: 2rem;
-      margin-bottom: 5px;
+      margin-bottom: 0;
+    }
+
+    #lokasi-info {
+      font-size: 1rem;
+      color: #ccc;
+      margin-bottom: 20px;
     }
 
     #tanggal {
-      font-size: 1.4rem;
+      font-size: 1.2rem;
       margin-bottom: 20px;
-      color: #ffeb3b;
+      color: #e0e0e0;
     }
 
     #jadwal-sholat {
       margin-top: 20px;
-      background-color: #1c1c1c;
+      background-color: #1e1e1e;
       border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(255, 255, 255, 0.1);
+      box-shadow: 0 2px 6px rgba(255,255,255,0.1);
       padding: 10px;
       max-width: 400px;
       margin-left: auto;
@@ -39,8 +45,8 @@
 
     .sholat {
       padding: 10px;
-      border-bottom: 1px solid #444;
-      font-size: 1.2rem;
+      border-bottom: 1px solid #333;
+      font-size: 1.1rem;
       color: #90caf9;
     }
 
@@ -51,27 +57,21 @@
     #next-prayer {
       font-weight: bold;
       margin-top: 25px;
-      font-size: 1.3rem;
-      color: #ffc107;
-      background-color: #333;
+      font-size: 1.2rem;
+      color: #ffab00;
+      background-color: #263238;
       display: inline-block;
       padding: 10px 15px;
       border-radius: 6px;
-      box-shadow: 0 2px 4px rgba(255, 255, 255, 0.15);
-    }
-
-    #lokasi-info {
-      font-size: 0.9rem;
-      color: #ccc;
-      margin-top: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
   </style>
 </head>
 <body>
   <h2>Jadwal Sholat</h2>
-  <div id="lokasi-info">Menentukan lokasi...</div>
-  <div id="tanggal">Memuat tanggal...</div>
-  <div id="jadwal-sholat">Memuat jadwal sholat...</div>
+  <div id="lokasi-info">Memuat lokasi...</div>
+  <div id="tanggal"></div>
+  <div id="jadwal-sholat"></div>
   <div id="next-prayer"></div>
 
   <script>
@@ -105,67 +105,51 @@
       document.getElementById("tanggal").textContent = `${masehi} M / ${hijri}`;
     }
 
-    async function getPrayerTimes(lat, lon) {
+    async function tampilkanJadwalSholat(lat = -6.7320236, lon = 108.5700151) {
       const response = await fetch(`https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=20`);
       const data = await response.json();
-      return { timings: data.data.timings, location: data.data.meta };
-    }
+      const timings = data.data.timings;
 
-    async function tampilkanJadwalSholat(lat = -6.7325, lon = 108.5523) {
-      const result = await getPrayerTimes(lat, lon);
-      const timings = result.timings;
-      const lokasi = result.location;
-
-      document.getElementById("lokasi-info").textContent = `Lokasi saat ini: ${lokasi.timezone}`;
-
-      const prayerMap = {
-        Fajr: "Subuh",
-        Dhuhr: "Dzuhur",
-        Asr: "Ashar",
-        Maghrib: "Maghrib",
-        Isha: "Isya"
-      };
-
-      const jadwal = document.getElementById("jadwal-sholat");
-      jadwal.innerHTML = "";
-
-      for (const [key, label] of Object.entries(prayerMap)) {
-        const waktu = timings[key];
-        const div = document.createElement("div");
-        div.className = "sholat";
-        div.textContent = `${label}: ${waktu}`;
-        jadwal.appendChild(div);
-      }
-
-      window.waktuSholat = {
+      const prayerTimes = {
         Subuh: timings.Fajr,
         Dzuhur: timings.Dhuhr,
         Ashar: timings.Asr,
         Maghrib: timings.Maghrib,
         Isya: timings.Isha
       };
+
+      const jadwal = document.getElementById("jadwal-sholat");
+      jadwal.innerHTML = "";
+
+      for (const [sholat, waktu] of Object.entries(prayerTimes)) {
+        const div = document.createElement("div");
+        div.className = "sholat";
+        div.textContent = `${sholat}: ${waktu}`;
+        jadwal.appendChild(div);
+      }
+
+      window._prayerTimes = prayerTimes; // simpan global untuk countdown
     }
 
     function getNextPrayerTime() {
-      const prayerTimes = window.waktuSholat;
-      if (!prayerTimes) return { name: "-", date: new Date() };
-
+      if (!window._prayerTimes) return { name: "-", date: new Date() };
       const now = new Date();
-      const times = Object.entries(prayerTimes).map(([name, time]) => {
+      const todayStr = now.toISOString().split("T")[0];
+      const times = Object.entries(window._prayerTimes).map(([name, time]) => {
         const [hours, minutes] = time.split(":").map(Number);
-        const prayerDate = new Date(now);
-        prayerDate.setHours(hours, minutes, 0, 0);
+        const prayerDate = new Date(todayStr + "T" + time + ":00");
         return { name, date: prayerDate };
       });
 
       for (const { name, date } of times) {
-        if (date > now) return { name, date };
+        if (date > now) {
+          return { name, date };
+        }
       }
 
       const nextDay = new Date(now);
       nextDay.setDate(now.getDate() + 1);
-      const [h, m] = prayerTimes["Subuh"].split(":").map(Number);
-      nextDay.setHours(h, m, 0, 0);
+      nextDay.setHours(4, 30, 0, 0);
       return { name: "Subuh", date: nextDay };
     }
 
@@ -173,6 +157,7 @@
       const { name, date } = getNextPrayerTime();
       const now = new Date();
       const diff = Math.max(0, date - now);
+
       const hours = Math.floor(diff / 1000 / 60 / 60);
       const minutes = Math.floor((diff / 1000 / 60) % 60);
       const seconds = Math.floor((diff / 1000) % 60);
@@ -186,24 +171,41 @@
 
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
-          (pos) => {
+          async (pos) => {
             const lat = pos.coords.latitude;
             const lon = pos.coords.longitude;
-            tampilkanJadwalSholat(lat, lon).then(() => {
-              updateCountdown();
-              setInterval(updateCountdown, 1000);
-            });
+
+            await tampilkanJadwalSholat(lat, lon);
+
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+              .then(res => res.json())
+              .then(data => {
+                const address = data.address;
+                const lokasiLengkap = [
+                  address.village || address.hamlet || address.suburb || address.neighbourhood || "",
+                  address.town || address.city_district || address.county || "",
+                  address.city || address.regency || address.state_district || "",
+                  address.state || ""
+                ].filter(Boolean).join(", ");
+                document.getElementById("lokasi-info").textContent = lokasiLengkap;
+              })
+              .catch(() => {
+                document.getElementById("lokasi-info").textContent = "Gagal menampilkan lokasi lengkap.";
+              });
+
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
           },
-          (err) => {
-            console.warn("Gagal ambil lokasi, pakai default (Cirebon)");
-            tampilkanJadwalSholat().then(() => {
-              updateCountdown();
-              setInterval(updateCountdown, 1000);
-            });
+          async () => {
+            await tampilkanJadwalSholat();
+            document.getElementById("lokasi-info").textContent = "Klayan, Gunung Jati, Cirebon, Jawa Barat";
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
           }
         );
       } else {
         tampilkanJadwalSholat().then(() => {
+          document.getElementById("lokasi-info").textContent = "Klayan, Gunung Jati, Cirebon, Jawa Barat";
           updateCountdown();
           setInterval(updateCountdown, 1000);
         });
