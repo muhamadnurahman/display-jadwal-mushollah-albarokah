@@ -24,6 +24,9 @@ Proyek ini adalah aplikasi web sederhana yang menampilkan **jadwal sholat real-t
 
 ✅ Tidak perlu koneksi database atau backend — cukup copy dan buka, langsung jalan.
 
+## 🔗 Hasil
+https://muhamadnurahman.github.io/jadwal-sholat/
+
 ## 📌 Catatan
 
 - Pastikan perangkat mengizinkan akses **lokasi (GPS)** untuk mendapatkan waktu sholat yang akurat.
